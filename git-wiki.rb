@@ -25,10 +25,11 @@ class Page
     end
   end
 
-  def self.find_or_create(name)
+  def self.find_or_create(name, rev=nil)
     path = name + GitWiki.extension
-    blob = GitWiki.repository.tree/path
-    new(blob || Grit::Blob.create(GitWiki.repository, :name => path))
+    tree = rev ? GitWiki.repository.commit(rev).tree : GitWiki.repository.tree
+    blob = tree/path || Grit::Blob.create(GitWiki.repository, :name => path)
+    new(blob)
   end
 
   def self.wikify(content)
@@ -56,6 +57,10 @@ class Page
     "/pages/#{to_s}/edit"
   end
 
+  def log_url
+    "/pages/#{to_s}/revisions/"
+  end
+
   def css_class
     @blob.id ? 'existing' : 'new'
   end
@@ -66,6 +71,12 @@ class Page
 
   def to_html
     Page.wikify(RDiscount.new(content).to_html)
+  end
+
+  def log
+    GitWiki.repository.log('master', @blob.name).collect do |commit|
+      commit.to_hash
+    end
   end
 
   def save!(data, msg)
@@ -90,6 +101,16 @@ end
 
 get '/pages/:page/?' do
   @page = Page.find_or_create(params[:page])
+  haml :show
+end
+
+get '/pages/:page/revisions/' do
+  @page = Page.find_or_create(params[:page])
+  haml :log
+end
+
+get '/pages/:page/revisions/:rev' do
+  @page = Page.find_or_create(params[:page], params[:rev])
   haml :show
 end
 
