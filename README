@@ -68,6 +68,22 @@ environments). Edit it, or copy it to your rackup script and override
 the defaults. You can use this to set different wiki repositories for
 development/testing/production if you want.
 
+Caveats
+-------
+
+Because we use Grit by modifying the workdir and then calling `git
+add`, git-wiki must be run with a non-bare wiki repo. If you want to
+clone this repo and then push to it, you should read the [Git FAQ
+entry][faq] about the perils of pushing to a repo with a checked-out
+workdir.
+
+In practice, you will hopefully never edit the workdir of the "live"
+repo directly, so ensuring that receive.denyNonFastForwards is turned
+on and adding a post-update hook to reset the index is a reasonable
+(if not very clean) work-around.
+
+[faq]: http://git.or.cz/gitwiki/GitFaq#push-is-reverse-of-fetch
+
 License
 -------
 
