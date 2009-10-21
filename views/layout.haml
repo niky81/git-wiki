@@ -12,9 +12,22 @@
     %ul#actions
       - if @page
         %li
-          %a.edit{:href => @page.edit_url}> edit
+          %a.edit{:href => @page.edit_url}> modifica
         %li
-          %a.log{:href => @page.log_url}> log
+          %a.log{:href => @page.log_url}> versioni
       %li
-        %a.list{:href => '/pages/'}> all
+        %a.list{:href => '/pages/'}> tutte le pagine
+    - if @page_sup and @page_sup.nitems > 0
+      %ul#sup
+        superiori:
+        - @page_sup.each do |pg|
+          %li
+            %a{:href => pg.url}= pg.to_s.sub("#{@page.to_s}_","")
+            ,
+    - if @page_bot and @page_bot.nitems > 0
+      %ul#sup
+        collegati:
+        - @page_bot.each do |pg|
+          %li
+            %a{:href => pg.url}= pg.to_s.sub("#{@page.to_s}_","")
     #content= yield

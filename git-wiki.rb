@@ -7,7 +7,7 @@ require 'rdiscount'
 
 module GitWiki
   class << self
-    attr_accessor :wiki_path, :root_page, :extension, :link_pattern
+    attr_accessor :wiki_path, :root_page, :extension, :link_pattern, :include_pattern
     attr_reader :wiki_name, :repository
     def wiki_path=(path)
       @wiki_name = File.basename(path)
@@ -25,6 +25,32 @@ class Page
     end
   end
 
+  def self.find_all_sup(name)
+    name_arr = name.split("_")
+    name_str = ""
+    ret = []
+    name_arr.each do |str|
+      name_str += str
+      ret += GitWiki.repository.tree.contents.select do |blob|
+        blob.name =~ /^#{name_str}#{GitWiki.extension}$/ and blob.name != "#{name}#{GitWiki.extension}"
+      end.collect do |blob|
+        new(blob)
+      end
+      name_str += "_"
+    end
+    return ret
+  end
+
+  def self.find_all_bottom(name)
+    GitWiki.repository.tree.contents.select do |blob|
+      blob.name =~ /^#{name}.*#{GitWiki.extension}$/ and blob.name != "#{name}#{GitWiki.extension}"
+    end.collect do |blob|
+      new(blob)
+    end
+  end
+
+
+
   def self.find_or_create(name, rev=nil)
     path = name + GitWiki.extension
     commit = GitWiki.repository.commit(rev || GitWiki.repository.head.commit)
@@ -33,12 +59,18 @@ class Page
   end
 
   def self.wikify(content)
-    content.gsub(GitWiki.link_pattern) {|match| link($1) }
+    (content.gsub(GitWiki.link_pattern) {|match| link($1) }).gsub(GitWiki.include_pattern) {|match| includi($1) }
   end
 
   def self.link(text)
     page = find_or_create(text.gsub(/[^\w\s]/, '').split.join('-').downcase)
     "<a class='page #{page.css_class}' href='#{page.url}'>#{text}</a>"
+  end
+
+  def self.includi(text)
+    page = find_or_create(text.gsub(/[^\w\s]/, '').split.join('-').downcase)
+    #"<a class='page #{page.css_class}' href='#{page.url}'>#{text}</a>"
+    page.to_html
   end
 
   def initialize(blob)
@@ -102,6 +134,10 @@ end
 
 get '/pages/:page/?' do
   @page = Page.find_or_create(params[:page])
+  @page_bot = Page.find_all_bottom(params[:page])
+  @page_bot.delete(@page)
+  @page_sup = Page.find_all_sup(params[:page])
+  p @page_sup
   haml :show
 end
 
@@ -126,9 +162,17 @@ post '/pages/:page/edit' do
   redirect @page.url, 303
 end
 
+get '/ass/:farm/:user/:text' do
+  @page = Page.find_or_create(params[:farm])
+  @page.save!("#{@page.content}\n#{params[:farm]} - #{params[:text]}", params[:user])
+  p @page
+  erb :test
+end
+
 configure do
   GitWiki.wiki_path = Dir.pwd
   GitWiki.root_page = 'index'
   GitWiki.extension = '.text'
   GitWiki.link_pattern = /\[\[(.*?)\]\]/
+  GitWiki.include_pattern = /\{\{(.*?)\}\}/
 end
