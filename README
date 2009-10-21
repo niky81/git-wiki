@@ -1,6 +1,23 @@
-Decklin's git-wiki
+Nik's git-wiki
 ==================
 
+Forked from Decklin, docs from Decklin, with this added features:
+  * wiki page inside page with {{page name}} tag. When parser see {{}}
+    tag insert the html of {{page name}}. It's recursive.
+  * automatic linking to superior and bottom pages, using naming.
+    Example: if you have 3 pages like this:
+			* fruit.text
+      * fruit_apple.text
+      * fruit_banana.text
+      * fruit_apple_cooked.text
+    - In fruit.text there are automatic links to bottom pages fruit_apple.text
+      fruit_banana.text and fruit_apple_cooked.text.
+    - In fruit_apple.text there is automatic link to superior page 
+      fruit.text and bottom fruit_apple_cooked.text.
+    - In fruit_banana.text there is automatic link to superior page
+      fruit.text.
+
+Here begin Decklin's docs.
 Everyone needs a fork of git-wiki; here's mine. I have dispensed with
 a few things in an attempt to make it even more minimal:
 
